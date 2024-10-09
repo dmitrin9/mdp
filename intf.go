@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 const italicAnsi = "\x1B[3m" // rule: *italic*
 const boldAnsi = "\x1B[1m"   // rule: **bold**
@@ -32,13 +35,27 @@ var BackgroundColors map[string]string = map[string]string{
 	"white":   "\x1B[47m",
 }
 
+var _MDRender_ExitCodeMap map[int]string = map[int]string{
+	100: "E_OK",
+	200: "EOF",
+	300: "Malformed/Incomplete Input",
+}
+
 const resetStyleProperty = "\x1B[0m"
 
-func main() {
-	fmt.Println(ForegroundColors["magenta"] + BackgroundColors["green"] + italicAnsi + "italic" + resetStyleProperty)
-	fmt.Println(boldAnsi + "bold" + resetStyleProperty)
-	fmt.Println(faintAnsi + "faint" + resetStyleProperty)
-	fmt.Println(underlinedAnsi + "underline" + resetStyleProperty)
-	fmt.Println(strikethroughAnsi + "strikethrough" + resetStyleProperty)
-	fmt.Println(inverseAnsi + "inverse" + resetStyleProperty)
+func outputRenderError(errno int, errmsg string) {
+	result := fmt.Sprintf(
+		"Render error: %d\nSuccinct: \"%s\"\nVerbose: \"%s\"",
+		errno,
+		_MDRender_ExitCodeMap[errno],
+	)
+	fmt.Fprintln(os.Stderr, result)
+}
+
+func renderItalic(txt string) string {
+	return italicAnsi + txt + resetStyleProperty
+}
+
+func Render(md *MarkdownState) {
+	fmt.Println("Render")
 }

@@ -12,8 +12,8 @@ type token_t struct {
 }
 
 type markdownParseNode struct {
-	idx1     uint
-	idx2     uint
+	idx1     int
+	idx2     int
 	depth    int
 	property string
 }
@@ -34,12 +34,14 @@ type MarkdownState struct {
 	nodes []markdownParseNode
 }
 
+// These really only apply to lexical analysis.
 var _MDParser_ExitCodeMap map[int]string = map[int]string{
 	100: "E_OK",
 	200: "EOF",
 	300: "ColumnOverflow",
 	400: "MissingFile",
 	500: "Invalid File",
+	600: "Missing/Invalid data",
 }
 
 var _MDParser_Tokens map[string]string = map[string]string{
@@ -55,7 +57,7 @@ var _MDParser_Tokens map[string]string = map[string]string{
 	"\n": "NEWLINE",
 }
 
-func outputError(errno int, filepath string, row int, col int) {
+func outputParserError(errno int, filepath string, row int, col int) {
 	result := fmt.Sprintf(
 		"Parsing error \"%s\" found at %d:%d in %s",
 		_MDParser_ExitCodeMap[errno],
@@ -72,7 +74,7 @@ func LoadFile(md *MarkdownState, filepath string) error {
 	s := strings.Split(md.filepath, ".")
 	if s[len(s)-1] != "md" {
 		md.done = 500
-		outputError(md.done, md.filepath, md.row, md.col)
+		outputParserError(md.done, md.filepath, md.row, md.col)
 		return nil
 	}
 
@@ -136,9 +138,9 @@ func PopulateMarkdownStateBuffer(md *MarkdownState) {
 	}
 }
 
-func headerParseRule(md *MarkdownState) [][]int {
+func headerParseRule(md *MarkdownState) []markdownParseNode {
 	// check for no header
-	indexBuffer := [][]int{}
+	indexBuffer := []markdownParseNode{}
 
 	i := md.parseIndex
 	for i < len(md.buf) {
@@ -146,7 +148,14 @@ func headerParseRule(md *MarkdownState) [][]int {
 			j := i + 1
 			for j < len(md.buf) {
 				if md.buf[j].tok_type == "NEWLINE" {
-					indexBuffer = append(indexBuffer, []int{i + 2, j})
+					tmp := markdownParseNode{
+						idx1:     i + 2,
+						idx2:     j,
+						property: "HEADING",
+						depth:    0,
+					}
+					indexBuffer = append(indexBuffer, tmp)
+					//indexBuffer = append(indexBuffer, []int{i + 2, j})
 					break
 				}
 				j++
@@ -155,7 +164,15 @@ func headerParseRule(md *MarkdownState) [][]int {
 			j := i + 1
 			for j < len(md.buf) {
 				if md.buf[j].tok_type == "NEWLINE" {
-					indexBuffer = append(indexBuffer, []int{i + 3, j})
+
+					tmp := markdownParseNode{
+						idx1:     i + 3,
+						idx2:     j,
+						property: "HEADING",
+						depth:    1,
+					}
+					indexBuffer = append(indexBuffer, tmp)
+					//indexBuffer = append(indexBuffer, []int{i + 3, j})
 					break
 				}
 				j++
@@ -166,11 +183,12 @@ func headerParseRule(md *MarkdownState) [][]int {
 	if i > md.parseIndex {
 		md.parseIndex = i
 	}
+	md.parseIndex = 0
 	return indexBuffer
 }
 
-func italicParseRule(md *MarkdownState) [][]int {
-	indexBuffer := [][]int{}
+func italicParseRule(md *MarkdownState) []markdownParseNode {
+	indexBuffer := []markdownParseNode{}
 
 	i := md.parseIndex
 	for i < len(md.buf) {
@@ -181,7 +199,14 @@ func italicParseRule(md *MarkdownState) [][]int {
 				if string(md.buf[j].tok_raw) == "*" {
 					md.buf[i-1] = token_t{tok_raw: " ", tok_type: "LITERAL"}
 					md.buf[j] = token_t{tok_raw: " ", tok_type: "LITERAL"}
-					indexBuffer = append(indexBuffer, []int{i, j})
+
+					tmp := markdownParseNode{
+						idx1:     i,
+						idx2:     j,
+						property: "ITALIC",
+						depth:    0,
+					}
+					indexBuffer = append(indexBuffer, tmp)
 					break
 				}
 				j++
@@ -192,6 +217,7 @@ func italicParseRule(md *MarkdownState) [][]int {
 	if i > md.parseIndex {
 		md.parseIndex = i
 	}
+	md.parseIndex = 0
 	return indexBuffer
 }
 
@@ -204,47 +230,21 @@ func boldParseRule(dat []byte) (int, int) {
 */
 
 func ParseMarkdownFromState(md *MarkdownState) {
-	/*
-		for i := range md.filedata {
-
-		}
-	*/
-	fmt.Println("Full String ", string(md.filedata[0]))
-	val1 := headerParseRule(md)
-	val2 := headerParseRule(md)
-	val3 := italicParseRule(md)
-
-	fmt.Println("-------------------------------------------")
-
-	//fmt.Println(val1)
-	for i := range val1 {
-		a := val1[i][0]
-		b := val1[i][1]
-		fmt.Println("-------------------------")
-		fmt.Println(" ", md.buf[a:b])
-		fmt.Println("-------------------------")
+	italics := italicParseRule(md)
+	for italic := range italics {
+		md.nodes = append(md.nodes, italics[italic])
 	}
 
-	fmt.Println("-------------------------------------------")
-
-	//fmt.Println(val2)
-	for i := range val2 {
-		a := val2[i][0]
-		b := val2[i][1]
-		fmt.Println("-------------------------")
-		fmt.Println(" ", md.buf[a:b])
-		fmt.Println("-------------------------")
+	headings := headerParseRule(md)
+	for heading := range headings {
+		md.nodes = append(md.nodes, headings[heading])
 	}
 
-	fmt.Println("-------------------------------------------")
-
-	//fmt.Println(val3)
-	for i := range val3 {
-		a := val3[i][0]
-		b := val3[i][1]
-		fmt.Println("---------------------")
-		fmt.Println(md.buf[a:b])
-		fmt.Println("---------------------")
+	if len(md.nodes) == 0 {
+		/*outputParserError(errno int, filepath string, row int, col int)*/
+		outputParserError(600, md.filepath, md.row, md.col)
 	}
-
+	fmt.Println(md.nodes)
 }
+
+// deal with the indexes in order.
