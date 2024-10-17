@@ -1,4 +1,3 @@
 # markdown parser/renderer.
 ------
-I tried my best to replicate github's markdown flavor
-This project was created so I could preview my readme's before comitting a repo. I know that vim has a markdown parser but since it's built in to an editor, it's not exactly true to life.
+This is a very barebones markdown parser. It can pretty much only parse italic text and header text. I plan on adding more syntax in the future on an as-needed basis. For the mean time though, this exists as a solid base to build future syntax off of.

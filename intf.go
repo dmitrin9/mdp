@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 const italicAnsi = "\x1B[3m" // rule: *italic*
@@ -52,10 +53,44 @@ func outputRenderError(errno int, errmsg string) {
 	fmt.Fprintln(os.Stderr, result)
 }
 
-func renderItalic(txt string) string {
+func sliceBufferToString(md *MarkdownState, i1 int, i2 int) string {
+	buffer := []string{}
+	for i1 < i2 {
+		buffer = append(buffer, md.buf[i1].tok_raw)
+		i1++
+	}
+	return strings.Join(buffer[:], "")
+}
+
+func formatItalic(txt string) string {
 	return italicAnsi + txt + resetStyleProperty
 }
 
-func Render(md *MarkdownState) {
-	fmt.Println("Render")
+func formatInverse(txt string) string {
+	return inverseAnsi + txt + resetStyleProperty
+}
+
+func Render(md *MarkdownState) string {
+	stringBuilder := []string{}
+
+	cursor := 0
+	for i := range md.nodes {
+		if md.nodes[i].property == "ITALIC" {
+			start, end := md.nodes[i].idx1, md.nodes[i].idx2
+			before := sliceBufferToString(md, cursor+1, start-1)
+			inside := sliceBufferToString(md, start, end+1)
+			cursor = end + 1
+			stringBuilder = append(stringBuilder, before+formatItalic(inside))
+		} else if md.nodes[i].property == "HEADING" {
+			start, end := md.nodes[i].idx1, md.nodes[i].idx2
+			before := sliceBufferToString(md, cursor+1, start-1)
+			inside := sliceBufferToString(md, start, end+1)
+			cursor = end + 1
+			stringBuilder = append(stringBuilder, before+formatInverse(inside))
+		}
+	}
+	stringBuilder = append(stringBuilder, sliceBufferToString(md, cursor+1, len(md.buf)))
+
+	dat := strings.Join(stringBuilder[:], "")
+	return dat
 }

@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 func testParser() {
 	md := MarkdownState{}
 	LoadFile(&md, "./test.md")
@@ -17,10 +19,10 @@ func testRender() {
 	LoadFile(&md, "./test.md")
 	PopulateMarkdownStateBuffer(&md)
 	ParseMarkdownFromState(&md)
-	Render(&md)
+	fmt.Println(Render(&md))
 }
 
 func main() {
-	testParser()
+	//testParser()
 	testRender()
 }
