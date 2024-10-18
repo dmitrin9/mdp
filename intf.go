@@ -77,10 +77,13 @@ func Render(md *MarkdownState) string {
 	for i := range md.nodes {
 		if md.nodes[i].property == "ITALIC" {
 			start, end := md.nodes[i].idx1, md.nodes[i].idx2
-			before := sliceBufferToString(md, cursor+1, start-1)
-			inside := sliceBufferToString(md, start, end+1)
+			before := sliceBufferToString(md, cursor, start)
+			inside := sliceBufferToString(md, start+1, end)
 			cursor = end + 1
-			stringBuilder = append(stringBuilder, before+formatItalic(inside))
+			stringBuilder = append(stringBuilder, before)
+			stringBuilder = append(stringBuilder, formatItalic(inside))
+			fmt.Println("BEFORE ", before)
+			fmt.Println("INSIDE ", inside)
 		} else if md.nodes[i].property == "HEADING" {
 			start, end := md.nodes[i].idx1, md.nodes[i].idx2
 			before := sliceBufferToString(md, cursor+1, start-1)
@@ -89,7 +92,7 @@ func Render(md *MarkdownState) string {
 			stringBuilder = append(stringBuilder, before+formatInverse(inside))
 		}
 	}
-	stringBuilder = append(stringBuilder, sliceBufferToString(md, cursor+1, len(md.buf)))
+	stringBuilder = append(stringBuilder, sliceBufferToString(md, cursor, len(md.buf)))
 
 	dat := strings.Join(stringBuilder[:], "")
 	return dat

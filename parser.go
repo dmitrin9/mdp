@@ -215,6 +215,38 @@ func headerParseRule(md *MarkdownState) []markdownParseNode {
 
 func italicParseRule(md *MarkdownState) []markdownParseNode {
 	indexBuffer := []markdownParseNode{}
+	i := md.parseIndex
+
+	insideEncloser := false
+	buf := []int{}
+
+	for i < len(md.buf) {
+		if string(md.buf[i].tok_raw) == "*" {
+			insideEncloser = !insideEncloser
+			buf = append(buf, i)
+
+			if insideEncloser == false && len(buf) == 2 {
+				indexBuffer = append(indexBuffer, markdownParseNode{
+					idx1:     buf[0],
+					idx2:     buf[1],
+					property: "ITALIC",
+					depth:    0,
+				})
+				buf = []int{}
+			}
+		}
+		i++
+	}
+	md.parseIndex = 0
+	fmt.Println(indexBuffer)
+	fmt.Println(md.buf[indexBuffer[0].idx1])
+	fmt.Println(md.buf[indexBuffer[0].idx2])
+	return indexBuffer
+}
+
+/*
+func italicParseRule(md *MarkdownState) []markdownParseNode {
+	indexBuffer := []markdownParseNode{}
 
 	i := md.parseIndex
 	for i < len(md.buf) {
@@ -234,7 +266,6 @@ func italicParseRule(md *MarkdownState) []markdownParseNode {
 								continue
 							}
 						}
-					*/
 					tmp := markdownParseNode{
 						idx1:     i,
 						idx2:     j - 1,
@@ -257,8 +288,10 @@ func italicParseRule(md *MarkdownState) []markdownParseNode {
 	md.parseIndex = 0
 	return indexBuffer
 }
+*/
 
 // Literally just checks for something that doesn't fall into the bounds of another parse index buffer, and flags it as a literal. All this really serves to do is count all of the data that isn't parsed as some special format.
+/*
 func literalsParseRule(md *MarkdownState) []markdownParseNode {
 	indexBuffer := []markdownParseNode{}
 	//fmt.Println("NODDESSSS ", md.nodes)
@@ -309,12 +342,6 @@ func ParseMarkdownFromState(md *MarkdownState) {
 	if len(md.nodes) == 0 {
 		/*outputParserError(errno int, filepath string, row int, col int)*/
 		outputParserError(600, md.filepath, md.row, md.col)
-	}
-
-	literals := literalsParseRule(md)
-	//fmt.Println("Literals ", literals)
-	for literal := range literals {
-		md.nodes = append(md.nodes, literals[literal])
 	}
 
 	//fmt.Println(md.nodes)
