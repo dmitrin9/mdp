@@ -1,5 +1,7 @@
-# hello
-## hello2
+# Welcome to my amazing document.
 
-hjelsdjkflksjdASFl;'kASFD;Fas
-*pro* anti *pro* hello
+*First Italic*
+Description of the first italic.
+
+*Second Italic*
+Description of the second italic.

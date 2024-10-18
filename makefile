@@ -1,2 +1,3 @@
 default:
-	go run test.go parser.go intf.go
+	go build main.go parser.go intf.go &&\
+		mv ./main ./build/main

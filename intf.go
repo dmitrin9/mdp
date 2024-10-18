@@ -82,8 +82,6 @@ func Render(md *MarkdownState) string {
 			cursor = end + 1
 			stringBuilder = append(stringBuilder, before)
 			stringBuilder = append(stringBuilder, formatItalic(inside))
-			fmt.Println("BEFORE ", before)
-			fmt.Println("INSIDE ", inside)
 		} else if md.nodes[i].property == "HEADING" {
 			start, end := md.nodes[i].idx1, md.nodes[i].idx2
 			before := sliceBufferToString(md, cursor+1, start-1)
