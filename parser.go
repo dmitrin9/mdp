@@ -154,7 +154,7 @@ func headerParseRule(md *MarkdownState) []markdownParseNode {
 		if md.buf[i].tok_raw == "#" && md.buf[i+1].tok_raw != "#" {
 			j := i + 1
 			for j < len(md.buf) {
-				if md.buf[j].tok_type == "NEWLINE" {
+				if md.buf[j].tok_type == "NEWLINE" || j == len(md.buf)-1 {
 					tmp := markdownParseNode{
 						idx1:     i + 2,
 						idx2:     j,
@@ -179,7 +179,7 @@ func headerParseRule(md *MarkdownState) []markdownParseNode {
 		} else if md.buf[i].tok_raw == "#" && md.buf[i+1].tok_raw == "#" {
 			j := i + 1
 			for j < len(md.buf) {
-				if md.buf[j].tok_type == "NEWLINE" {
+				if md.buf[j].tok_type == "NEWLINE" || j == len(md.buf)-1 {
 
 					tmp := markdownParseNode{
 						idx1:     i + 3,

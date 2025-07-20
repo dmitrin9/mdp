@@ -3,23 +3,24 @@ package main
 import "fmt"
 
 func testParser() {
-	md := MarkdownState{}
-	LoadFile(&md, "./test.md")
-	PopulateMarkdownStateBuffer(&md)
-	/*
-		fmt.Println(md.done)
-		fmt.Println(md.buf)
-	*/
-
-	ParseMarkdownFromState(&md)
+	files := []string{"./test.md", "./test2.md"}
+	for i := range files {
+		md := MarkdownState{}
+		LoadFile(&md, files[i])
+		PopulateMarkdownStateBuffer(&md)
+		ParseMarkdownFromState(&md)
+	}
 }
 
 func testRender() {
-	md := MarkdownState{}
-	LoadFile(&md, "./test.md")
-	PopulateMarkdownStateBuffer(&md)
-	ParseMarkdownFromState(&md)
-	fmt.Println(Render(&md))
+	files := []string{"./test.md", "./test2.md"}
+	for i := range files {
+		md := MarkdownState{}
+		LoadFile(&md, files[i])
+		PopulateMarkdownStateBuffer(&md)
+		ParseMarkdownFromState(&md)
+		fmt.Println(Render(&md))
+	}
 }
 
 func main() {
